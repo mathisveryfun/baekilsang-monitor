@@ -140,7 +140,7 @@ def attempt_reservation(sn):
 
 
 def main():
-    """5분 실행 동안 30초마다 9회 체크 (4분30초)"""
+    """28분 동안 30초마다 56회 체크"""
     # 매시 정각에 상태 보고 (시작할 때 분이 0~4일 때 = 매시간 1회)
     minute = datetime.now().minute
     if minute < 5:
@@ -151,7 +151,7 @@ def main():
             f"🔄 4개 백일상 모두 대여마감 상태"
         )
 
-    CHECKS = 9
+    CHECKS = 56
     INTERVAL = 30
 
     for round_num in range(1, CHECKS + 1):
