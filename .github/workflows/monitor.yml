@@ -2,9 +2,18 @@ name: 백일상 모니터링
 
 on:
   schedule:
-    # 매 30분마다 실행 (0분, 30분)
+    # 매 30분마다 실행 (백업용)
     - cron: '0,30 * * * *'
   workflow_dispatch:  # 수동 실행 가능
+
+# GITHUB_TOKEN에 워크플로우 실행(Actions Write) 권한 부여
+permissions:
+  actions: write
+
+# 중복 실행 방지 및 무한 루프 인계용 동시성 설정
+concurrency:
+  group: baekilsang-monitor
+  cancel-in-progress: true
 
 jobs:
   check:
@@ -27,3 +36,12 @@ jobs:
           LOGIN_ID: ${{ secrets.LOGIN_ID }}
           LOGIN_PW: ${{ secrets.LOGIN_PW }}
         run: python check_once.py
+
+      - name: Trigger next run (무한 루프)
+        if: always()
+        run: |
+          curl -X POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          https://api.github.com/repos/${{ github.repository }}/actions/workflows/monitor.yml/dispatches \
+          -d '{"ref":"main"}'
