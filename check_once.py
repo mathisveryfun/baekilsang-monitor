@@ -10,6 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import json
+import time
 from datetime import datetime
 
 # === 환경변수에서 설정 ===
@@ -139,55 +140,56 @@ def attempt_reservation(sn):
 
 
 def main():
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{now}] 백일상 모니터링 체크 시작")
+    """5분 실행 동안 30초마다 9회 체크 (4분30초)"""
+    CHECKS = 9
+    INTERVAL = 30
 
-    for product in PRODUCTS:
-        sn = product["sn"]
-        name = product["name"]
-        available = check_availability(sn)
+    for round_num in range(1, CHECKS + 1):
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{now}] 체크 {round_num}/{CHECKS}")
 
-        if available is None:
-            print(f"  {name}: 네트워크 오류")
-            continue
+        for product in PRODUCTS:
+            sn = product["sn"]
+            name = product["name"]
+            available = check_availability(sn)
 
-        if available:
-            print(f"  🚨 {name}: 예약가능 발견!")
+            if available is None:
+                print(f"  {name}: 네트워크 오류")
+                continue
 
-            # 텔레그램 알림
-            send_telegram(
-                f"🚨🚨🚨 <b>예약가능 발견!</b>\n\n"
-                f"📦 {name} (sn={sn})\n📅 {TARGET_DATE}\n⏰ {now}\n\n"
-                f"🔗 직접 예약:\nhttps://www.ssicare.or.kr/m2/sub4_2_write.asp"
-                f"?sn={sn}&the_day={TARGET_DATE}&category=%EB%B0%B1%EC%9D%BC%EC%83%81\n\n"
-                f"⏳ 자동 예약 시도 중..."
-            )
+            if available:
+                print(f"  {name}: 예약가능 발견!")
 
-            # 자동 예약
-            success, msg = attempt_reservation(sn)
-
-            if success:
                 send_telegram(
-                    f"🎉 <b>예약 성공!</b>\n\n"
-                    f"📦 {name}\n📅 {TARGET_DATE}\n"
-                    f"⏰ 대여 {RESERVATION['rental_time']}\n"
-                    f"🔄 반납 {RESERVATION['return_time']}\n"
-                    f"👗 {RESERVATION['clothing']}\n"
-                    f"🎀 {RESERVATION['accessory']}\n\n"
-                    f"✅ 마이페이지에서 확인!"
+                    f"🚨🚨🚨 <b>예약가능 발견!</b>\n\n"
+                    f"📦 {name} (sn={sn})\n📅 {TARGET_DATE}\n⏰ {now}\n\n"
+                    f"🔗 직접 예약:\nhttps://www.ssicare.or.kr/m2/sub4_2_write.asp"
+                    f"?sn={sn}&the_day={TARGET_DATE}&category=%EB%B0%B1%EC%9D%BC%EC%83%81\n\n"
+                    f"⏳ 자동 예약 시도 중..."
                 )
-                print(f"  🎉 예약 성공!")
-                return
-            elif success is None:
-                send_telegram(f"⚠️ <b>결과 확인 필요</b>\n{msg}")
-                print(f"  ⚠️ {msg}")
-            else:
-                send_telegram(f"❌ <b>자동 예약 실패</b>\n{msg}\n\n직접 예약하세요!")
-                print(f"  ❌ {msg}")
-        else:
-            print(f"  {name}: 대여마감")
 
-    print("체크 완료")
+                success, msg = attempt_reservation(sn)
+
+                if success:
+                    send_telegram(
+                        f"🎉 <b>예약 성공!</b>\n\n📦 {name}\n📅 {TARGET_DATE}\n"
+                        f"⏰ 대여 {RESERVATION['rental_time']}\n🔄 반납 {RESERVATION['return_time']}\n"
+                        f"👗 {RESERVATION['clothing']}\n🎀 {RESERVATION['accessory']}\n\n✅ 마이페이지에서 확인!"
+                    )
+                    print(f"  예약 성공!")
+                    return
+                elif success is None:
+                    send_telegram(f"⚠️ <b>결과 확인 필요</b>\n{msg}")
+                else:
+                    send_telegram(f"❌ <b>자동 예약 실패</b>\n{msg}\n\n직접 예약하세요!")
+                    print(f"  {msg}")
+            else:
+                print(f"  {name}: 대여마감")
+
+        if round_num < CHECKS:
+            time.sleep(INTERVAL)
+
+    print("완료")
 
 
 if __name__ == "__main__":
