@@ -143,14 +143,16 @@ def main():
     """28분 동안 30초마다 56회 체크"""
     CHECKS = 56
     INTERVAL = 30
+    last_notified_hour = -1  # 중복 알림 방지용
 
     for round_num in range(1, CHECKS + 1):
         kst_loop = datetime.utcnow() + timedelta(hours=9)
         now = kst_loop.strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{now}] 체크 {round_num}/{CHECKS}")
 
-        # 첫 회차 + 매 120회(약 1시간)마다 텔레그램으로 작동 상태 보고
-        if round_num == 1 or round_num % 120 == 0:
+        # 매시 정각(XX:00~XX:02)에 1회 텔레그램 상태 보고 (1시간 간격)
+        if kst_loop.minute < 3 and kst_loop.hour != last_notified_hour:
+            last_notified_hour = kst_loop.hour
             send_telegram(
                 f"📊 <b>모니터링 정상 작동 중</b>\n"
                 f"⏰ {kst_loop.strftime('%Y-%m-%d %H:%M')} (KST)\n"
