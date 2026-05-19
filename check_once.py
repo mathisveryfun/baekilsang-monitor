@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 import os
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # === 환경변수에서 설정 ===
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
@@ -142,11 +142,13 @@ def attempt_reservation(sn):
 def main():
     """28분 동안 30초마다 56회 체크"""
     # 매시 정각에 상태 보고 (지연 실행을 고려하여 분이 20 미만일 때 = 매시간 1회)
-    minute = datetime.now().minute
+    # GitHub Actions 러너는 UTC 기준이므로 한국 시간(KST)으로 변환하여 메시지 전송
+    kst_now = datetime.utcnow() + timedelta(hours=9)
+    minute = kst_now.minute
     if minute < 20:
         send_telegram(
             f"📊 <b>모니터링 정상 작동 중</b>\n"
-            f"⏰ {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
+            f"⏰ {kst_now.strftime('%Y-%m-%d %H:%M')} (KST)\n"
             f"📅 대상: {TARGET_DATE}\n"
             f"🔄 4개 백일상 모두 대여마감 상태"
         )
@@ -155,7 +157,8 @@ def main():
     INTERVAL = 30
 
     for round_num in range(1, CHECKS + 1):
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        kst_loop = datetime.utcnow() + timedelta(hours=9)
+        now = kst_loop.strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{now}] 체크 {round_num}/{CHECKS}")
 
         for product in PRODUCTS:
