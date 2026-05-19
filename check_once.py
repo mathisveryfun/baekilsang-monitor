@@ -141,9 +141,9 @@ def attempt_reservation(sn):
 
 def main():
     """28분 동안 30초마다 56회 체크"""
-    # 매시 정각에 상태 보고 (시작할 때 분이 0~4일 때 = 매시간 1회)
+    # 매시 정각에 상태 보고 (지연 실행을 고려하여 분이 20 미만일 때 = 매시간 1회)
     minute = datetime.now().minute
-    if minute < 5:
+    if minute < 20:
         send_telegram(
             f"📊 <b>모니터링 정상 작동 중</b>\n"
             f"⏰ {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
