@@ -13,7 +13,7 @@ permissions:
 # 중복 실행 방지 및 무한 루프 인계용 동시성 설정
 concurrency:
   group: baekilsang-monitor
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   check:

@@ -149,9 +149,8 @@ def main():
         now = kst_loop.strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{now}] 체크 {round_num}/{CHECKS}")
 
-        # 매시 정각(KST 0분)에 텔레그램으로 작동 상태 보고 (시간당 1회)
-        # 루프 내부에서 체크하므로 실행 시작 시간이 어긋나도 정각에 확실히 전송됩니다.
-        if kst_loop.minute == 0 and kst_loop.second < 30:
+        # 첫 회차 + 매 120회(약 1시간)마다 텔레그램으로 작동 상태 보고
+        if round_num == 1 or round_num % 120 == 0:
             send_telegram(
                 f"📊 <b>모니터링 정상 작동 중</b>\n"
                 f"⏰ {kst_loop.strftime('%Y-%m-%d %H:%M')} (KST)\n"
