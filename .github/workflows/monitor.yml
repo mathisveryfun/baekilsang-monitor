@@ -1,0 +1,29 @@
+name: 백일상 모니터링
+
+on:
+  schedule:
+    # 매 5분마다 실행 (GitHub Actions 최소 간격)
+    - cron: '*/5 * * * *'
+  workflow_dispatch:  # 수동 실행 가능
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Run monitor check
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          LOGIN_ID: ${{ secrets.LOGIN_ID }}
+          LOGIN_PW: ${{ secrets.LOGIN_PW }}
+        run: python check_once.py
