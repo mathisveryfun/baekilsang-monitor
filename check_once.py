@@ -189,6 +189,16 @@ def main():
         if round_num < CHECKS:
             time.sleep(INTERVAL)
 
+    # 매시 정각에 상태 보고 (분이 0~4일 때 = 매시간 1회)
+    minute = datetime.now().minute
+    if minute < 5:
+        send_telegram(
+            f"📊 <b>모니터링 정상 작동 중</b>\n"
+            f"⏰ {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
+            f"📅 대상: {TARGET_DATE}\n"
+            f"🔄 4개 백일상 모두 대여마감 상태"
+        )
+
     print("완료")
 
 
