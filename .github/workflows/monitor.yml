@@ -35,6 +35,12 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           LOGIN_ID: ${{ secrets.LOGIN_ID }}
           LOGIN_PW: ${{ secrets.LOGIN_PW }}
+          REQUEST_NAME: ${{ secrets.REQUEST_NAME }}
+          PHONE1: ${{ secrets.PHONE1 }}
+          PHONE2: ${{ secrets.PHONE2 }}
+          PHONE3: ${{ secrets.PHONE3 }}
+          CHILD_NAME: ${{ secrets.CHILD_NAME }}
+          CHILD_BIRTH: ${{ secrets.CHILD_BIRTH }}
         run: python check_once.py
 
       - name: Trigger next run (무한 루프)
