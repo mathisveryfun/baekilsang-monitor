@@ -19,6 +19,14 @@ TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 LOGIN_ID = os.environ.get("LOGIN_ID", "")
 LOGIN_PW = os.environ.get("LOGIN_PW", "")
 
+# 신청자 개인정보 환경변수
+REQUEST_NAME = os.environ.get("REQUEST_NAME", "")
+PHONE1 = os.environ.get("PHONE1", "010")
+PHONE2 = os.environ.get("PHONE2", "")
+PHONE3 = os.environ.get("PHONE3", "")
+CHILD_NAME = os.environ.get("CHILD_NAME", "")
+CHILD_BIRTH = os.environ.get("CHILD_BIRTH", "")
+
 BASE_URL = "https://www.ssicare.or.kr"
 TARGET_DATE = "2026-06-11"
 DATE_PREFIX = "202606"
@@ -106,13 +114,13 @@ def attempt_reservation(sn):
             "Eday": eday,
             "rental_time": f"{RESERVATION['rental_time']}({day_kr})",
             "return_time": RESERVATION["return_time"],
-            "request_name": "정종훈",
-            "phone1": "010",
-            "phone2": "9800",
-            "phone3": "3436",
-            "child_chk": "정하음/2026-03-07",
-            "child_name": "정하음",
-            "child_birth": "2026-03-07",
+            "request_name": REQUEST_NAME,
+            "phone1": PHONE1,
+            "phone2": PHONE2,
+            "phone3": PHONE3,
+            "child_chk": f"{CHILD_NAME}/{CHILD_BIRTH}",
+            "child_name": CHILD_NAME,
+            "child_birth": CHILD_BIRTH,
             "option1": RESERVATION["clothing"],
             "option2": RESERVATION["accessory"],
         }
