@@ -66,6 +66,8 @@ def check_availability(sn):
     url = f"{BASE_URL}/m2/sub4_2_cal.asp?sn={sn}&category=%EB%B0%B1%EC%9D%BC%EC%83%81&datToday={DATE_PREFIX}"
     try:
         resp = requests.get(url, timeout=15)
+        resp.encoding = "utf-8"
+        
         # 1. HTTP 상태 코드 검증 (차단되거나 서버 에러인 경우 감지)
         if resp.status_code != 200:
             print(f"[WARN] sn={sn}: HTTP {resp.status_code} 응답 수신")
@@ -76,7 +78,30 @@ def check_availability(sn):
             print(f"[WARN] sn={sn}: 정상적인 서산시육아종합지원센터 페이지가 아님 (차단 의심)")
             return None
 
-        return f"the_day={TARGET_DATE}" in resp.text
+        # 3. 달력 셀 파싱을 통한 날짜 상태 정확히 검증 (사용자 피드백 반영)
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        target_day_str = TARGET_DATE.split('-')[-1]  # "11"
+        
+        found_target_cell = False
+        for td in soup.find_all('td'):
+            day_span = td.find('span', class_='day')
+            if day_span and day_span.text.strip() == target_day_str:
+                found_target_cell = True
+                td_text = td.text.strip().replace('\r', '').replace('\n', ' ')
+                
+                # "대여가능" 또는 "대여마감" 중 하나가 반드시 포함되어 있어야 정상
+                if "대여가능" in td_text:
+                    return True
+                elif "대여마감" in td_text:
+                    return False
+                else:
+                    print(f"[WARN] sn={sn}: {TARGET_DATE}일의 상태를 파악할 수 없음 (텍스트: '{td_text}')")
+                    return None  # 이상 징후로 판단 (None 반환 시 경고 누적)
+                    
+        if not found_target_cell:
+            print(f"[WARN] sn={sn}: 달력에서 {TARGET_DATE}일을 찾을 수 없음")
+            return None
+            
     except Exception as e:
         print(f"[ERROR] sn={sn}: {e}")
         return None
