@@ -66,6 +66,16 @@ def check_availability(sn):
     url = f"{BASE_URL}/m2/sub4_2_cal.asp?sn={sn}&category=%EB%B0%B1%EC%9D%BC%EC%83%81&datToday={DATE_PREFIX}"
     try:
         resp = requests.get(url, timeout=15)
+        # 1. HTTP 상태 코드 검증 (차단되거나 서버 에러인 경우 감지)
+        if resp.status_code != 200:
+            print(f"[WARN] sn={sn}: HTTP {resp.status_code} 응답 수신")
+            return None
+        
+        # 2. 실제 사이트 본문 검증 (차단 페이지로 리다이렉트 되었거나 빈 페이지인 경우 감지)
+        if "육아종합지원센터" not in resp.text:
+            print(f"[WARN] sn={sn}: 정상적인 서산시육아종합지원센터 페이지가 아님 (차단 의심)")
+            return None
+
         return f"the_day={TARGET_DATE}" in resp.text
     except Exception as e:
         print(f"[ERROR] sn={sn}: {e}")
@@ -152,6 +162,8 @@ def main():
     CHECKS = 56
     INTERVAL = 30
     last_notified_hour = -1  # 중복 알림 방지용
+    consecutive_failures = 0
+    fail_alert_sent = False
 
     for round_num in range(1, CHECKS + 1):
         kst_loop = datetime.utcnow() + timedelta(hours=9)
@@ -168,6 +180,7 @@ def main():
                 f"🔄 4개 백일상 모두 대여마감 상태"
             )
 
+        round_failed = True  # 이번 라운드 전체 조회 실패 여부
         for product in PRODUCTS:
             sn = product["sn"]
             name = product["name"]
@@ -176,6 +189,8 @@ def main():
             if available is None:
                 print(f"  {name}: 네트워크 오류")
                 continue
+
+            round_failed = False  # 하나라도 정상 응답(True/False)이 오면 정상으로 침
 
             if available:
                 print(f"  {name}: 예약가능 발견!")
@@ -205,6 +220,23 @@ def main():
                     print(f"  {msg}")
             else:
                 print(f"  {name}: 대여마감")
+
+        if round_failed:
+            consecutive_failures += 1
+            print(f"[WARN] {round_num}회차 전체 조회 실패 (누적: {consecutive_failures}회)")
+        else:
+            consecutive_failures = 0
+            fail_alert_sent = False
+
+        # 연속 10회 (약 5분) 이상 전체 실패 시 텔레그램 경고 알림
+        if consecutive_failures >= 10 and not fail_alert_sent:
+            send_telegram(
+                f"⚠️ <b>[경고] 모니터링 접속 실패 발생!</b>\n\n"
+                f"서산시육아종합지원센터 사이트 접속이 연속 10회 실패했습니다.\n"
+                f"현재 IP 차단(밴) 되었거나 사이트가 점검 중일 가능성이 있습니다.\n"
+                f"⏰ 발생 시간: {now}"
+            )
+            fail_alert_sent = True
 
         if round_num < CHECKS:
             time.sleep(INTERVAL)
